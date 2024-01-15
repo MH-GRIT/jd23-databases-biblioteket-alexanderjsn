@@ -1,3 +1,3 @@
 public class Main {
-    public
+    public void test(){}
 }
