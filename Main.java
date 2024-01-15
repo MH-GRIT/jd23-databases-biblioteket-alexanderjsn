@@ -1,3 +1,7 @@
 public class Main {
-    public void test(){}
+    public void test(){
+        int test=1;
+
+
+    }
 }
