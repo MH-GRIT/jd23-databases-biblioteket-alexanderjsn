@@ -1,3 +1,5 @@
+package src;
+
 import com.mysql.cj.jdbc.MysqlDataSource;
 
 import java.sql.Connection;
@@ -8,7 +10,7 @@ public class Database {
     private static String password = "103eec29f";
     private static String url = "localhost";
     private static int port = 3306;
-    private static String databaseName = "Library";
+    private static String databaseName = "library";
     private static Database instance;
     private MysqlDataSource dataSource;
 
