@@ -1,15 +1,12 @@
 package src;
 
 import java.sql.*;
-import java.util.Scanner;  // Import the Scanner class
-
+import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) throws SQLException {
-
         try {
-
-            // skapar connection
             Connection conn = Database.getInstance().getConnection();
             Scanner scanner;
             if (conn != null) {
@@ -20,7 +17,6 @@ public class Main {
                 System.out.println("Choose option: 1. register  2. log in: ");
                 int choice = Integer.parseInt(scanner.nextLine());
                 if (choice == 1) {
-
                     System.out.println("Enter new name: ");
                     String userScanner = scanner.nextLine();
 
@@ -36,27 +32,19 @@ public class Main {
                     System.out.println("Enter new Username: ");
                     String userNameScanner = scanner.nextLine();
 
-
-                    String nameInput = userScanner;
-                    String emailInput = emailScanner;
-                    String phoneInput = phoneScanner;
-                    String passwordInput = passwordScanner;
-                    String usernameInput = userNameScanner;
                     String newUser = "INSERT INTO userTable (name, email, phone, password, username) VALUES (?,?,?,?,?)";
                     PreparedStatement pstmt = conn.prepareStatement(newUser);
-                    pstmt.setString(1, nameInput);
-                    pstmt.setString(2, emailInput);
-                    pstmt.setString(3, phoneInput);
-                    pstmt.setString(4, passwordInput);
-                    pstmt.setString(5, usernameInput);
+                    pstmt.setString(1, userScanner);
+                    pstmt.setString(2, emailScanner);
+                    pstmt.setString(3, phoneScanner);
+                    pstmt.setString(4, passwordScanner);
+                    pstmt.setString(5, userNameScanner);
 
-                    // Visar antalet påverkade/uppdaterade rader
                     int affectedRows = pstmt.executeUpdate();
                     System.out.println("Rows affected: " + affectedRows);
                     pstmt.close();
 
                 } else if (choice == 2) {
-
                     System.out.println("Enter new username: ");
                     String insertUsername = scanner.nextLine();
                     System.out.println("Enter new password: ");
@@ -69,29 +57,46 @@ public class Main {
                         if (loginRs.next()) {
                             String existingPassword = loginRs.getString("password");
                             if (insertPassword.equals(existingPassword)) {
-                                System.out.println("Log in succesful!");
-                                System.out.println("Search for book: ");
-                                String bookScan = scanner.nextLine();
-                                String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
-                                try (PreparedStatement bookPstmt = conn.prepareStatement(searchBook)) {
-                                    bookPstmt.setString(1, "%" + bookScan + "%");
-                                    ResultSet bookRs = bookPstmt.executeQuery();
-                                    if (bookRs.next()) {
-                                        String existingBooks = bookRs.getString("bookName");
-                                        if (bookScan.equals(existingBooks)) {
-                                            System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
+                                System.out.println("Log in successful!");
+                                System.out.println("Search for book(1):  ,  Update information(2):   ,   History(3):     ");
+                                int loginChoiceScan = Integer.parseInt(scanner.nextLine());
+                                if (loginChoiceScan == 1) {
+                                    String bookScan = scanner.nextLine();
+                                    String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
+                                    try (PreparedStatement bookPstmt = conn.prepareStatement(searchBook)) {
+                                        bookPstmt.setString(1, "%" + bookScan + "%");
+                                        ResultSet bookRs = bookPstmt.executeQuery();
+                                        if (bookRs.next()) {
+                                            String existingBooks = bookRs.getString("bookName");
+                                            if (bookScan.equals(existingBooks)) {
+                                                System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
+                                            }
+                                        } else {
+                                            System.out.println("Login not successful");
                                         }
-
-                                    } else {
-                                        System.out.println("Login not successful");
                                     }
-                                } catch (SQLException e) {
-                                    throw new RuntimeException(e);
+                                }
+
+                                else if (loginChoiceScan == 2) {
+                                    System.out.println("Choose what to update: (1) Name, (2), Email, (3) Phone, (4) Password ");
+                                    int updateScan = Integer.parseInt(scanner.nextLine());
+                                    if (updateScan == 1) {
+                                        System.out.println("Choose new name: ");
+                                        String nameUpdate = scanner.nextLine();
+                                        String updateSQL = "UPDATE userTable SET name = ? WHERE username = ?";
+                                        try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)){
+                                            updatePstmt.setString(1, nameUpdate);
+                                            updatePstmt.setString(2, insertUsername);
+                                            int rowsUpdated = updatePstmt.executeUpdate();
+                                            System.out.println("Update done!");
+                                        }
+                                    }
                                 }
                             }
-
                         }
                     } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    } catch (RuntimeException e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -101,7 +106,8 @@ public class Main {
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
-
+    }
+    }
 
 
 
@@ -120,5 +126,3 @@ public class Main {
             rs.close();
             stmt.close();
             conn.close();*/
-    }
-}
