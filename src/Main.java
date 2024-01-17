@@ -5,7 +5,7 @@ import java.util.Scanner;  // Import the Scanner class
 
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
 
         try {
 
@@ -70,20 +70,37 @@ public class Main {
                             String existingPassword = loginRs.getString("password");
                             if (insertPassword.equals(existingPassword)) {
                                 System.out.println("Log in succesful!");
-                            } else {
-                                System.out.println("Login not successful");
-                            }
-                        }
-                    }
+                                System.out.println("Search for book: ");
+                                String bookScan = scanner.nextLine();
+                                String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
+                                try (PreparedStatement bookPstmt = conn.prepareStatement(searchBook)) {
+                                    bookPstmt.setString(1, "%" + bookScan + "%");
+                                    ResultSet bookRs = bookPstmt.executeQuery();
+                                    if (bookRs.next()) {
+                                        String existingBooks = bookRs.getString("bookName");
+                                        if (bookScan.equals(existingBooks)) {
+                                            System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
+                                        }
 
+                                    } else {
+                                        System.out.println("Login not successful");
+                                    }
+                                } catch (SQLException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         } catch (SQLException e) {
-            System.exit(1);
+            throw new RuntimeException(e);
+        } catch (RuntimeException e) {
             throw new RuntimeException(e);
         }
-    }
-}
 
 
 
@@ -103,3 +120,5 @@ public class Main {
             rs.close();
             stmt.close();
             conn.close();*/
+    }
+}
