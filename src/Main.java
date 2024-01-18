@@ -6,6 +6,8 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) throws SQLException {
+        GUI gui = new GUI();
+
         try {
             Connection conn = Database.getInstance().getConnection();
             Scanner scanner;
@@ -116,9 +118,9 @@ public class Main {
     }
     }
 
+/*
 
-
-            /*String getBooks = "SELECT * FROM userTable";
+            String getBooks = "SELECT * FROM userTable";
             Statement stmt = conn.createStatement();
             ResultSet rs = stmt.executeQuery(getBooks);
 
@@ -127,12 +129,12 @@ public class Main {
             }
 
 
-                /*while(rs.next()){
+                while(rs.next()){
                     System.out.println(rs.getInt("bookID") + rs.getString("bookName") + rs.getInt("stock"));
                 }
             rs.close();
             stmt.close();
-            conn.close();*/
+            conn.close();
 
-
-// metod som tar in inlog input och basically kollar -> är inloggad = sant/falskt - ifall sant - ta fram inloggad variabel
+//metod som tar in inlog input och basically kollar -> är inloggad = sant/falskt - ifall sant - ta fram inloggad variabel
+*/
