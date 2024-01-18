@@ -11,6 +11,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class GUI {
+
+    public String testt;
+
     public JTextField usernameTextfield;
     public JPasswordField passwordTextfield;
     public String passwordInput;
@@ -147,6 +150,22 @@ public class GUI {
         JButton searchButton = new JButton("Sök böcker");
         JButton editInfoBTN = new JButton("Edit info");
         bookTable.setRowSelectionAllowed(true);
+
+        JButton addBTN = new JButton("Reservera");
+
+        bookTable.getSelectionModel().addListSelectionListener(e -> {
+            int test = bookTable.getSelectedRow();
+            //hämtar text värdet inuti row
+            testt = (String) bookTable.getValueAt(test,0);
+            System.out.println(test + testt);
+        });
+
+        homepagePanel.add(addBTN);
+        addBTN.addActionListener(e ->
+                {
+                    System.out.println(testt + "wow!");
+                });
+
 
 
         // min sida / edit info page
