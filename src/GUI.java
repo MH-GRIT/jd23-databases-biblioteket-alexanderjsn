@@ -3,8 +3,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 public class GUI {
     public JTextField usernameTextfield;
@@ -29,7 +31,12 @@ public class GUI {
 
 
     //homepage
-    JTable bookTable = new JTable();
+
+    DefaultTableModel bookDTable = new DefaultTableModel();
+    JTable bookTable = new JTable(bookDTable);
+    JScrollPane scrollPane = new JScrollPane(bookTable);
+
+
     JTextField searchField;
 
     public GUI() throws SQLException {
@@ -100,7 +107,7 @@ public class GUI {
         });
 
         // Homepage panel / boka böcker sida
-        homepagePanel.setLayout(new GridLayout(3,3));
+        homepagePanel.setLayout(new GridLayout(4,4));
         JLabel searchLabel = new JLabel("Sök Böcker efter namn, författare osv");
         searchField = new JTextField();
         JButton searchButton = new JButton("Sök böcker");
@@ -110,8 +117,8 @@ public class GUI {
         homepagePanel.add(searchLabel);
         homepagePanel.add(searchField);
         homepagePanel.add(searchButton);
-
-
+        bookDTable.addColumn("Böcker");
+        homepagePanel.add(scrollPane);
         // Min sida panel
 
 
@@ -120,6 +127,7 @@ public class GUI {
         mainPanel.add(registerPanel, "registerPanel");
         mainPanel.add(homepagePanel,"homepagePanel");
 
+        frame.pack();
         frame.setSize(500,500);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -192,19 +200,31 @@ public class GUI {
     public void checkBooks(){
         String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
         String searchInput = searchField.getText();
+        ArrayList<String> bookArray = new ArrayList<>();
+
         try (Connection conn = Database.getInstance().getConnection()){
-            PreparedStatement bookPstmt = conn.prepareStatement(searchBook); {
-            bookPstmt.setString(1, "%" + searchInput + "%");
-            ResultSet bookRs = bookPstmt.executeQuery();
-            while (bookRs.next()) {
-                String existingBooks = bookRs.getString("bookName");
-                if (existingBooks != null) {
+            PreparedStatement bookPstmt = conn.prepareStatement(searchBook);
+            {
+                bookPstmt.setString(1, "%" + searchInput + "%");
+                ResultSet bookRs = bookPstmt.executeQuery();
+
+                bookDTable.setRowCount(0);
+
+                String existingBooks = null;
+                while (bookRs.next()) {
+                    existingBooks = bookRs.getString("bookName");
+                    bookArray.add(existingBooks);
+                }
+                for (String book : bookArray) {
+                    bookDTable.addRow(new Object[]{book});
+                }
+               /* if (existingBooks != null) {
                     System.out.println("WOW!");
                     System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
-                }
+                }*/
 
-    };
-}} catch (SQLException e) {
+
+            }} catch (SQLException e) {
             throw new RuntimeException(e);
         }
         }
