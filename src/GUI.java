@@ -149,6 +149,9 @@ public class GUI {
         searchField = new JTextField();
         JButton searchButton = new JButton("Sök böcker");
         JButton editInfoBTN = new JButton("Edit info");
+        JButton historyBTN = new JButton("Se lånade böcker");
+
+
         bookTable.setRowSelectionAllowed(true);
 
         JButton addBTN = new JButton("Reservera");
@@ -163,6 +166,11 @@ public class GUI {
         homepagePanel.add(addBTN);
         addBTN.addActionListener(e ->
                 {
+                    try {
+                        addBook();
+                    } catch (SQLException ex) {
+                        throw new RuntimeException(ex);
+                    }
                     System.out.println(testt + "wow!");
                 });
 
@@ -422,4 +430,42 @@ public class GUI {
                 }
             }
         }
+    public void addBook() throws SQLException {
+        try (Connection conn = Database.getInstance().getConnection()) {
+
+            java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
+            java.sql.Date returnDate = currentDate.d
+
+
+            String userInfo = "SELECT userID FROM userTable WHERE username = ?";
+            PreparedStatement uinfoPSTMT = conn.prepareStatement(userInfo);
+            uinfoPSTMT.setString(1, usernameTextfield.getText());
+            ResultSet userinfoRS = uinfoPSTMT.executeQuery();
+            int userID = 0;
+            if (userinfoRS.next()) {
+                userID = userinfoRS.getInt("userID");
+            }
+
+
+            String bookInfo = "SELECT bookID FROM bookTable WHERE bookName = ?";
+            PreparedStatement bpstmt = conn.prepareStatement(bookInfo);
+            bpstmt.setString(1, testt);
+            ResultSet bookinfoRS = bpstmt.executeQuery();
+            int bookID = 0;
+            if (bookinfoRS.next()) {
+                bookID = bookinfoRS.getInt("bookID");
+            }
+
+
+            String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID) VALUES (?,?,?)";
+            PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
+            binfoPSTMT.setDate(1, currentDate);
+            binfoPSTMT.setInt(2, userID);
+            binfoPSTMT.setInt(3, bookID);
+            int updateReservation = binfoPSTMT.executeUpdate();
+            System.out.println("Added books!" + " User ID is: " + userID + "  Book ID is: " + bookID + "  username is: " + usernameTextfield.getText() + " Date is: " + currentDate);
+        }
+    }
+
+
 }
