@@ -146,8 +146,35 @@ public class GUI {
             System.out.println("Rows affected: " + affectedRows);
             pstmt.close();
             cl.show(mainPanel,"loginPanel");
+        } catch (java.sql.SQLIntegrityConstraintViolationException e){
+            System.out.println("User already exists!");
+            String error = e.getMessage();
+
+            if (error.contains("name")){
+                System.out.println("Name taken");
+                newusernameTextfield.setBackground(Color.red);
+            } else if (error.contains("email")) {
+                System.out.println("Mail taken");
+                emailTextfield.setBackground(Color.red);
+            }
 
         }
 
     }
+
+    /*public void alreadyExist() throws SQLException {
+        try (Connection conn = Database.getInstance().getConnection()) {
+            String checkUser = "SELECT name, email FROM userTable WHERE name = ? AND email = ?";
+            PreparedStatement checkUserPSTMT = conn.prepareStatement(checkUser);
+            checkUserPSTMT.setString(1, nametextField.getText());
+            checkUserPSTMT.setString(2, emailTextfield.getText());
+            ResultSet ifExistRS = checkUserPSTMT.executeQuery();
+            if(ifExistRS.next()){
+                System.out.println("User exists");
+            }
+            else{
+                System.out.println("User no exist");
+            }
+        }
+}*/
 }
