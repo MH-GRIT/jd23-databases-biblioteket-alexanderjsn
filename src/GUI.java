@@ -51,6 +51,16 @@ public class GUI {
 
     JTextField searchField;
 
+
+
+    // update:
+    JTextField insertName = new JTextField();
+    JTextField nameLabel;
+    JTextField emailLabel;
+    JTextField phoneLabel;
+    JTextField passwordLabel;
+    JTextField usernameLabel;
+
     public GUI() throws SQLException {
 
         frame.add(mainPanel);
@@ -136,6 +146,7 @@ public class GUI {
         searchField = new JTextField();
         JButton searchButton = new JButton("Sök böcker");
         JButton editInfoBTN = new JButton("Edit info");
+        bookTable.setRowSelectionAllowed(true);
 
 
         // min sida / edit info page
@@ -330,30 +341,30 @@ public class GUI {
                         userArray.add(existingPassword);
                         userArray.add(existingUsername);
 
-                        JLabel nameLabel = new JLabel("Name: " + existingUser);
-                        JLabel emailLabel = new JLabel("Email: " + existingMail);
-                        JLabel phoneLabel = new JLabel("Phone: " + existingPhone);
-                        JLabel passwordLabel = new JLabel("Password: " + existingPassword);
-                        JLabel usernameLabel = new JLabel("Username: " + existingUsername);
+                         nameLabel = new JTextField(existingUser);
+                         emailLabel = new JTextField(existingMail);
+                         phoneLabel = new JTextField(existingPhone);
+                         passwordLabel = new JTextField(existingPassword);
+                         usernameLabel = new JTextField(existingUsername);
+
                         editInfoPanel.add(nameLabel);
                         editInfoPanel.add(emailLabel);
                         editInfoPanel.add(phoneLabel);
                         editInfoPanel.add(passwordLabel);
                         editInfoPanel.add(usernameLabel);
-
-                        nameLabel.addMouseListener(new MouseAdapter() {
+                        JButton inserBtn = new JButton("Update info");
+                        editInfoPanel.add(inserBtn);
+                        inserBtn.addMouseListener(new MouseAdapter() {
                             @Override
                             public void mouseClicked(MouseEvent e) {
-                                super.mouseClicked(e);
-                                JTextField insertName = new JTextField();
-                                JButton inserBtn = new JButton("New name: ");
-                                editInfoPanel.add(insertName);
-                                editInfoPanel.add(inserBtn);
-                                editInfoPanel.revalidate();
-                                editInfoPanel.repaint();
-                                inserBtn.addMouseListener(Mo);
-                            }
-                        });
+                                try {
+                                    updateInfo();
+                                    editInfoPanel.revalidate();
+                                    editInfoPanel.repaint();
+                                } catch (SQLException ex) {
+                                    ex.printStackTrace();
+                                }
+                            }});
 
 
 
@@ -375,4 +386,21 @@ public class GUI {
             }
 
 
-        }}
+        }
+
+        public void updateInfo() throws SQLException {
+            try (Connection conn = Database.getInstance().getConnection()) {
+
+                String updateSQL = " UPDATE userTable SET name = ?, email = ?, phone = ?, password = ? WHERE username = ?";
+                try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)) {
+                    updatePstmt.setString(1, nameLabel.getText());
+                    updatePstmt.setString(2, emailLabel.getText());
+                    updatePstmt.setString(3, phoneLabel.getText());
+                    updatePstmt.setString(4, passwordLabel.getText());
+                    updatePstmt.setString(5, usernameLabel.getText());
+                    int rowsUpdated = updatePstmt.executeUpdate();
+                    System.out.println(rowsUpdated + "changes made!");
+                }
+            }
+        }
+}

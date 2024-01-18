@@ -95,6 +95,7 @@ public class Main {
                                             updatePstmt.setString(2, insertUsername);
                                             int rowsUpdated = updatePstmt.executeUpdate();
                                             System.out.println("Update done!");
+
                                         }
                                     }
                                     else if (loginChoiceScan == 3) {
