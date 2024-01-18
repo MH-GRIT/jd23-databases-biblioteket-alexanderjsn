@@ -15,6 +15,8 @@ public class GUI {
 
     public String testt;
 
+    public String reservedBookSelected;
+
     public JTextField usernameTextfield;
     public JPasswordField passwordTextfield;
     public String passwordInput;
@@ -77,6 +79,26 @@ public class GUI {
 
         // 'history panel
         JPanel historyPanel = new JPanel();
+
+        JButton returnBTN = new JButton("Lämna tillbaka");
+
+        reservedbookTable.getSelectionModel().addListSelectionListener(e -> {
+            int reservedbookInt = reservedbookTable.getSelectedRow();
+            //hämtar text värdet inuti row
+            reservedBookSelected = (String) reservedbookTable.getValueAt(reservedbookInt, 0);
+            System.out.println(reservedbookInt + reservedBookSelected);
+        });
+
+        historyPanel.add(returnBTN);
+        returnBTN.addActionListener(e ->
+        {
+            returnBook();
+            System.out.println("Returned" + reservedBookSelected);
+        });
+
+
+
+
 
         //Register panel
         JPanel registerPanel = new JPanel();
@@ -158,12 +180,14 @@ public class GUI {
         JButton editInfoBTN = new JButton("Edit info");
         JButton historyBTN = new JButton("Se lånade böcker");
         homepagePanel.add(historyBTN);
+
         historyBTN.addActionListener(e -> {
             cl.show(mainPanel, "historyPanel");
             history();
         });
 
         bookTable.setRowSelectionAllowed(true);
+        reservedbookTable.setRowSelectionAllowed(true);
 
         JButton addBTN = new JButton("Reservera");
 
@@ -182,7 +206,6 @@ public class GUI {
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
-            System.out.println(testt + "wow!");
         });
 
 
@@ -213,6 +236,7 @@ public class GUI {
         homepagePanel.add(searchButton);
         homepagePanel.add(editInfoBTN);
         bookDTable.addColumn("Böcker");
+        reservedbookDTable.addColumn("Lånade");
         homepagePanel.add(scrollPane);
 
         // Min sida panel
@@ -506,7 +530,10 @@ public class GUI {
     }
 
     public void history() {
+
         String getuserID = "SELECT userID FROM userTable WHERE username = ?";
+
+
 
         String reservedInfo = "SELECT * FROM reserveBook WHERE userID = ?";
 
@@ -533,13 +560,11 @@ public class GUI {
                 Date returnDate = reservedRS.getDate("returnDate");
                 Date borrowedDate = reservedRS.getDate("borrowedDate");
                 String bookName = reservedRS.getString("bookName");
-                System.out.println("Book name: " + bookName + "To be returned: " + returnDate);
-                reservedBooks = "Återlämnas: " + returnDate + "Lånad: " + borrowedDate + "Boknamn: " + bookName;
+                reservedBooks = returnDate + bookName + borrowedDate;
                 reservedArray.add(reservedBooks);
+                    reservedbookDTable.addRow(new Object[]{reservedBooks});
                 }
-                for (String reservedBook : reservedArray ){
-                    reservedbookDTable.addRow(new Object[]{reservedBook});
-                };
+
             }
 
 
@@ -547,4 +572,57 @@ public class GUI {
             throw new RuntimeException(e);
         }
     }
+   public void returnBook(){
+
+       try (Connection conn = Database.getInstance().getConnection()) {
+
+
+           String bookInfo = "SELECT bookID FROM bookTable WHERE bookName = ?";
+           PreparedStatement bpstmt = conn.prepareStatement(bookInfo);
+           bpstmt.setString(1, testt);
+           ResultSet bookinfoRS = bpstmt.executeQuery();
+           int bookID = 0;
+           if (bookinfoRS.next()) {
+               bookID = bookinfoRS.getInt("bookID");
+           }
+
+           String reservationInfo = "SELECT available FROM bookTable WHERE bookID = ?";
+           PreparedStatement rPSTMT = conn.prepareStatement(reservationInfo);
+           rPSTMT.setInt(1, bookID);
+           ResultSet reserveinfoRS = rPSTMT.executeQuery();
+           boolean booked = true;
+           if (reserveinfoRS.next()) {
+               booked = reserveinfoRS.getBoolean("available");
+           }
+           if (booked) {
+               String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID, borrowedDate, bookName) VALUES (?,?,?,?,?)";
+               String reservedStatus = "UPDATE bookTable SET available = ? WHERE bookID = ?";
+
+               PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
+               PreparedStatement reservedPSTMT = conn.prepareStatement(reservedStatus);
+
+               binfoPSTMT.setDate(1, returnDate);
+               binfoPSTMT.setInt(2, userID);
+               binfoPSTMT.setInt(3, bookID);
+               binfoPSTMT.setDate(4, currentDate);
+               binfoPSTMT.setString(5, testt);
+
+
+               reservedPSTMT.setBoolean(1, false);
+               reservedPSTMT.setInt(2, bookID);
+
+               System.out.println(bookID + " booked!");
+
+               int updateReservation = binfoPSTMT.executeUpdate();
+               int reserveBook = reservedPSTMT.executeUpdate();
+
+           } else {
+               System.out.println("Book is currently not available. Return date is: " + returnDate);
+           }
+       } catch (SQLException e) {
+           throw new RuntimeException(e);
+       }
+
+
+   };
 }
