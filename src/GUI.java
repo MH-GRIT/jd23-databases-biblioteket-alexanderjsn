@@ -28,6 +28,10 @@ public class GUI {
     JTextField newpasswordTextfield = new JTextField("Lösenord: ");
 
 
+    //homepage
+    JTable bookTable = new JTable();
+    JTextField searchField;
+
     public GUI() throws SQLException {
 
         frame.add(mainPanel);
@@ -95,19 +99,27 @@ public class GUI {
             }
         });
 
-        // Hemsida panel  / boka böcker sida
-        homepagePanel.setSize(2000,2000);
-
-
+        // Homepage panel / boka böcker sida
+        homepagePanel.setLayout(new GridLayout(3,3));
+        JLabel searchLabel = new JLabel("Sök Böcker efter namn, författare osv");
+        searchField = new JTextField();
+        JButton searchButton = new JButton("Sök böcker");
+        searchButton.addActionListener(e ->
+                checkBooks()
+        );
+        homepagePanel.add(searchLabel);
+        homepagePanel.add(searchField);
+        homepagePanel.add(searchButton);
 
 
         // Min sida panel
-        JPanel mypagePanel = new JPanel();
+
 
 
         mainPanel.add(loginPanel,"loginPanel");
         mainPanel.add(registerPanel, "registerPanel");
         mainPanel.add(homepagePanel,"homepagePanel");
+
         frame.setSize(500,500);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
@@ -177,4 +189,23 @@ public class GUI {
             }
         }
 }*/
+    public void checkBooks(){
+        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
+        String searchInput = searchField.getText();
+        try (Connection conn = Database.getInstance().getConnection()){
+            PreparedStatement bookPstmt = conn.prepareStatement(searchBook); {
+            bookPstmt.setString(1, "%" + searchInput + "%");
+            ResultSet bookRs = bookPstmt.executeQuery();
+            while (bookRs.next()) {
+                String existingBooks = bookRs.getString("bookName");
+                if (existingBooks != null) {
+                    System.out.println("WOW!");
+                    System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
+                }
+
+    };
+}} catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        }
 }
