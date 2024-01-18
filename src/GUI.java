@@ -39,8 +39,15 @@ public class GUI {
     //homepage
 
     DefaultTableModel bookDTable = new DefaultTableModel();
+    DefaultTableModel reservedbookDTable = new DefaultTableModel();
+
     JTable bookTable = new JTable(bookDTable);
+    JTable reservedbookTable = new JTable(reservedbookDTable);
+
+
     JScrollPane scrollPane = new JScrollPane(bookTable);
+    JScrollPane reservedscrollPane = new JScrollPane(reservedbookTable);
+
 
 
     // edit info page
@@ -186,7 +193,7 @@ public class GUI {
         userinfoPanel.setLayout(new GridLayout(2, 2));
         editInfoPanel.add(userinfoPanel);
 
-        historyPanel.add(scrollPane);
+        historyPanel.add(reservedscrollPane);
 
 
         editInfoBTN.addActionListener(new ActionListener() {
@@ -471,7 +478,7 @@ public class GUI {
                 booked = reserveinfoRS.getBoolean("available");
             }
             if (booked) {
-                String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID, borrowedDate) VALUES (?,?,?,?)";
+                String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID, borrowedDate, bookName) VALUES (?,?,?,?,?)";
                 String reservedStatus = "UPDATE bookTable SET available = ? WHERE bookID = ?";
 
                 PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
@@ -481,6 +488,8 @@ public class GUI {
                 binfoPSTMT.setInt(2, userID);
                 binfoPSTMT.setInt(3, bookID);
                 binfoPSTMT.setDate(4, currentDate);
+                binfoPSTMT.setString(5, testt);
+
 
                 reservedPSTMT.setBoolean(1, false);
                 reservedPSTMT.setInt(2, bookID);
@@ -515,16 +524,22 @@ public class GUI {
                 }
 
                 reservedInfoPstmt.setInt(1, usersID);
-                ResultSet bookRs = reservedInfoPstmt.executeQuery();
+                ResultSet reservedRS = reservedInfoPstmt.executeQuery();
 
-                bookDTable.setRowCount(0);
+                reservedbookDTable.setRowCount(0);
 
                 String reservedBooks;
-                while (bookRs.next()) {
-
+                while (reservedRS.next()) {
+                Date returnDate = reservedRS.getDate("returnDate");
+                Date borrowedDate = reservedRS.getDate("borrowedDate");
+                String bookName = reservedRS.getString("bookName");
+                System.out.println("Book name: " + bookName + "To be returned: " + returnDate);
+                reservedBooks = "Återlämnas: " + returnDate + "Lånad: " + borrowedDate + "Boknamn: " + bookName;
+                reservedArray.add(reservedBooks);
                 }
-                for (String reserved : reservedArray) {
-                }
+                for (String reservedBook : reservedArray ){
+                    reservedbookDTable.addRow(new Object[]{reservedBook});
+                };
             }
 
 
