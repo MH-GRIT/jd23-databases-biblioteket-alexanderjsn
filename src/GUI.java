@@ -17,7 +17,18 @@ public class GUI {
     public JPanel mainPanel = new JPanel();
     CardLayout cl = new CardLayout();
 
-    public GUI(){
+
+
+
+    //register variables:
+    JTextField nametextField = new JTextField("Namn: ");
+    JTextField emailTextfield = new JTextField("Mail: ");
+    JTextField phoneTextfield = new JTextField("Telefon: ");
+    JTextField newusernameTextfield = new JTextField("Användarnamn: ");
+    JTextField newpasswordTextfield = new JTextField("Lösenord: ");
+
+
+    public GUI() throws SQLException {
 
         frame.add(mainPanel);
         mainPanel.setLayout(cl);
@@ -25,7 +36,31 @@ public class GUI {
         //Register panel
         JPanel registerPanel = new JPanel();
         registerPanel.setLayout(new GridLayout(5,1));
-        registerPanel.setBackground(Color.black);
+        nametextField = new JTextField();
+        emailTextfield = new JTextField();
+        phoneTextfield = new JTextField();
+        newusernameTextfield = new JTextField();
+        newpasswordTextfield = new JTextField();
+        // finns sätt att bara ha enj textfield men ta in variabel för input? -- while loop skapa 7
+        registerPanel.add(nametextField);
+        registerPanel.add(emailTextfield);
+        registerPanel.add(phoneTextfield);
+        registerPanel.add(newusernameTextfield);
+        registerPanel.add(newpasswordTextfield);
+        JButton addRegister = new JButton("Register");
+        registerPanel.add(addRegister);
+
+        addRegister.addActionListener(e -> {
+            try {
+                registerMethod();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+
+
+
+
         mainPanel.add(registerPanel, "registerPanel");
 
 
@@ -68,6 +103,8 @@ public class GUI {
 
         // Min sida panel
         JPanel mypagePanel = new JPanel();
+
+
         mainPanel.add(loginPanel,"loginPanel");
         mainPanel.add(registerPanel, "registerPanel");
         mainPanel.add(homepagePanel,"homepagePanel");
@@ -95,7 +132,22 @@ public class GUI {
             }
         }
     }
-    public void registerMethod(){
+    public void registerMethod() throws SQLException {
+        try (Connection conn = Database.getInstance().getConnection()) {
+            String newUser = "INSERT INTO userTable (name, email, phone, password, username) VALUES (?,?,?,?,?)";
+            PreparedStatement pstmt = conn.prepareStatement(newUser);
+            pstmt.setString(1, nametextField.getText());
+            pstmt.setString(2, emailTextfield.getText());
+            pstmt.setString(3, phoneTextfield.getText());
+            pstmt.setString(4, newpasswordTextfield.getText());
+            pstmt.setString(5, newusernameTextfield.getText());
+
+            int affectedRows = pstmt.executeUpdate();
+            System.out.println("Rows affected: " + affectedRows);
+            pstmt.close();
+            cl.show(mainPanel,"loginPanel");
+
+        }
 
     }
 }
