@@ -44,6 +44,7 @@ public class Main {
                     System.out.println("Rows affected: " + affectedRows);
                     pstmt.close();
 
+                    // logga in
                 } else if (choice == 2) {
                     System.out.println("Enter new username: ");
                     String insertUsername = scanner.nextLine();
@@ -60,6 +61,9 @@ public class Main {
                                 System.out.println("Log in successful!");
                                 System.out.println("Search for book(1):  ,  Update information(2):   ,   History(3):     ");
                                 int loginChoiceScan = Integer.parseInt(scanner.nextLine());
+
+
+                                // hitta böcker
                                 if (loginChoiceScan == 1) {
                                     String bookScan = scanner.nextLine();
                                     String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
@@ -76,7 +80,7 @@ public class Main {
                                         }
                                     }
                                 }
-
+                                // uppdatera namn
                                 else if (loginChoiceScan == 2) {
                                     System.out.println("Choose what to update: (1) Name, (2), Email, (3) Phone, (4) Password ");
                                     int updateScan = Integer.parseInt(scanner.nextLine());
@@ -91,6 +95,9 @@ public class Main {
                                             System.out.println("Update done!");
                                         }
                                     }
+                                    else if (loginChoiceScan == 3) {
+                                            // historik
+                                        }
                                 }
                             }
                         }
@@ -126,3 +133,6 @@ public class Main {
             rs.close();
             stmt.close();
             conn.close();*/
+
+
+// metod som tar in inlog input och basically kollar -> är inloggad = sant/falskt - ifall sant - ta fram inloggad variabel
