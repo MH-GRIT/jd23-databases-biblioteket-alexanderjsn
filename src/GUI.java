@@ -9,6 +9,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 public class GUI {
 
@@ -25,8 +26,6 @@ public class GUI {
     public JPanel editInfoPanel = new JPanel();
 
     CardLayout cl = new CardLayout();
-
-
 
 
     //register variables:
@@ -55,7 +54,6 @@ public class GUI {
     JTextField searchField;
 
 
-
     // update:
     JTextField insertName = new JTextField();
     JTextField nameLabel;
@@ -69,9 +67,13 @@ public class GUI {
         frame.add(mainPanel);
         mainPanel.setLayout(cl);
 
+
+        // 'history panel
+        JPanel historyPanel = new JPanel();
+
         //Register panel
         JPanel registerPanel = new JPanel();
-        registerPanel.setLayout(new GridLayout(6,1));
+        registerPanel.setLayout(new GridLayout(6, 1));
         JLabel nameLabel = new JLabel("Name:");
         nametextField = new JTextField();
         JLabel emailLabel = new JLabel("Email:");
@@ -107,14 +109,12 @@ public class GUI {
         });
 
 
-
-
         mainPanel.add(registerPanel, "registerPanel");
 
 
         // Login panelen
         JPanel loginPanel = new JPanel();
-        loginPanel.setLayout(new GridLayout(5,1));
+        loginPanel.setLayout(new GridLayout(5, 1));
 
         JLabel usernameLabel = new JLabel("Anvädarnamn: ");
         loginPanel.add(usernameLabel);
@@ -129,7 +129,7 @@ public class GUI {
 
         loginPanel.add(registerButton);
         loginPanel.add(loginButton);
-        registerButton.addActionListener(e -> cl.show(mainPanel,"registerPanel"));
+        registerButton.addActionListener(e -> cl.show(mainPanel, "registerPanel"));
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -144,13 +144,17 @@ public class GUI {
         });
 
         // Homepage panel / boka böcker sida
-        homepagePanel.setLayout(new GridLayout(4,4));
+        homepagePanel.setLayout(new GridLayout(4, 4));
         JLabel searchLabel = new JLabel("Sök Böcker efter namn, författare osv");
         searchField = new JTextField();
         JButton searchButton = new JButton("Sök böcker");
         JButton editInfoBTN = new JButton("Edit info");
         JButton historyBTN = new JButton("Se lånade böcker");
-
+        homepagePanel.add(historyBTN);
+        historyBTN.addActionListener(e -> {
+            cl.show(mainPanel, "historyPanel");
+            history();
+        });
 
         bookTable.setRowSelectionAllowed(true);
 
@@ -159,43 +163,39 @@ public class GUI {
         bookTable.getSelectionModel().addListSelectionListener(e -> {
             int test = bookTable.getSelectedRow();
             //hämtar text värdet inuti row
-            testt = (String) bookTable.getValueAt(test,0);
+            testt = (String) bookTable.getValueAt(test, 0);
             System.out.println(test + testt);
         });
 
         homepagePanel.add(addBTN);
         addBTN.addActionListener(e ->
-                {
-                    try {
-                        addBook();
-                    } catch (SQLException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                    System.out.println(testt + "wow!");
-                });
-
+        {
+            try {
+                addBook();
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            System.out.println(testt + "wow!");
+        });
 
 
         // min sida / edit info page
-        editInfoPanel.setLayout(new GridLayout(2,2));
+        editInfoPanel.setLayout(new GridLayout(2, 2));
         //editInfoPanel.add(editscrollPane);
-        userinfoPanel.setSize(100,100);
-        userinfoPanel.setLayout(new GridLayout(2,2));
+        userinfoPanel.setSize(100, 100);
+        userinfoPanel.setLayout(new GridLayout(2, 2));
         editInfoPanel.add(userinfoPanel);
 
-
-
+        historyPanel.add(scrollPane);
 
 
         editInfoBTN.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cl.show(mainPanel,"editInfoPanel");
+                cl.show(mainPanel, "editInfoPanel");
                 retrieveInfo();
             }
         });
-
-
 
 
         searchButton.addActionListener(e ->
@@ -211,14 +211,14 @@ public class GUI {
         // Min sida panel
 
 
-        mainPanel.add(loginPanel,"loginPanel");
+        mainPanel.add(loginPanel, "loginPanel");
         mainPanel.add(registerPanel, "registerPanel");
-        mainPanel.add(homepagePanel,"homepagePanel");
-        mainPanel.add(editInfoPanel,"editInfoPanel");
-
+        mainPanel.add(homepagePanel, "homepagePanel");
+        mainPanel.add(editInfoPanel, "editInfoPanel");
+        mainPanel.add(historyPanel, "historyPanel");
 
         frame.pack();
-        frame.setSize(500,500);
+        frame.setSize(500, 500);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
@@ -232,9 +232,8 @@ public class GUI {
                 if (loginRs.next()) {
                     String existingPassword = loginRs.getString("password");
                     if (passwordInput.equals(existingPassword)) {
-                        cl.show(mainPanel,"homepagePanel");
-                    }
-                    else {
+                        cl.show(mainPanel, "homepagePanel");
+                    } else {
                         JOptionPane.showMessageDialog(frame, "Login Failed Successfully!");
                     }
 
@@ -242,11 +241,12 @@ public class GUI {
             }
         }
     }
+
     public void registerMethod() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
             String newUser = "INSERT INTO userTable (name, email, phone, password, username) VALUES (?,?,?,?,?)";
             PreparedStatement pstmt = conn.prepareStatement(newUser);
-            JLabel regNameLbl = new JLabel("Name: " );
+            JLabel regNameLbl = new JLabel("Name: ");
             pstmt.setString(1, nametextField.getText());
             pstmt.setString(2, emailTextfield.getText());
             pstmt.setString(3, phoneTextfield.getText());
@@ -256,12 +256,12 @@ public class GUI {
             int affectedRows = pstmt.executeUpdate();
             System.out.println("Rows affected: " + affectedRows);
             pstmt.close();
-            cl.show(mainPanel,"loginPanel");
-        } catch (SQLIntegrityConstraintViolationException e){
+            cl.show(mainPanel, "loginPanel");
+        } catch (SQLIntegrityConstraintViolationException e) {
             System.out.println("User already exists!");
             String error = e.getMessage();
 
-            if (error.contains("name")){
+            if (error.contains("name")) {
                 System.out.println("Name taken");
                 newusernameTextfield.setBackground(Color.red);
             } else if (error.contains("email")) {
@@ -288,12 +288,12 @@ public class GUI {
             }
         }
 }*/
-    public void checkBooks(){
+    public void checkBooks() {
         String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
         String searchInput = searchField.getText();
         ArrayList<String> bookArray = new ArrayList<>(); // endast en array kamske?
 
-        try (Connection conn = Database.getInstance().getConnection()){
+        try (Connection conn = Database.getInstance().getConnection()) {
             PreparedStatement bookPstmt = conn.prepareStatement(searchBook);
             {
                 bookPstmt.setString(1, "%" + searchInput + "%");
@@ -315,10 +315,11 @@ public class GUI {
                 }*/
 
 
-            }} catch (SQLException e) {
+            }
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        }
+    }
         /*public void updateInfo() throws SQLException {
 
                     String updateSQL = "UPDATE userTable SET name = ? WHERE username = ?";
@@ -331,67 +332,67 @@ public class GUI {
                 }
         }*/
 
-        public void retrieveInfo(){
-            ArrayList<String> userArray = new ArrayList<>();
-            try (Connection conn = Database.getInstance().getConnection()) {
-                String userInfo = "SELECT * FROM userTable WHERE username = ?";
+    public void retrieveInfo() {
+        ArrayList<String> userArray = new ArrayList<>();
+        try (Connection conn = Database.getInstance().getConnection()) {
+            String userInfo = "SELECT * FROM userTable WHERE username = ?";
 
 
-                try (PreparedStatement userInfoPstmt = conn.prepareStatement(userInfo)) {
-                    userInfoPstmt.setString(1, usernameTextfield.getText());
-                    ResultSet userInfoRS = userInfoPstmt.executeQuery();
+            try (PreparedStatement userInfoPstmt = conn.prepareStatement(userInfo)) {
+                userInfoPstmt.setString(1, usernameTextfield.getText());
+                ResultSet userInfoRS = userInfoPstmt.executeQuery();
 
 
-                    String existingUser = null;
-                    String existingMail = null;
-                    String existingPhone = null;
-                    String existingPassword = null;
-                    String existingUsername = null;
+                String existingUser = null;
+                String existingMail = null;
+                String existingPhone = null;
+                String existingPassword = null;
+                String existingUsername = null;
 
 
+                editDTable.setRowCount(0);
 
-                    editDTable.setRowCount(0);
-
-                    String existingUsers;
+                String existingUsers;
 
 
-                    while (userInfoRS.next()) {
-                        existingUser = userInfoRS.getString("name");
-                        existingMail = userInfoRS.getString("email");
-                        existingPhone = userInfoRS.getString("phone");
-                        existingPassword = userInfoRS.getString("password");
-                        existingUsername = userInfoRS.getString("username");
+                while (userInfoRS.next()) {
+                    existingUser = userInfoRS.getString("name");
+                    existingMail = userInfoRS.getString("email");
+                    existingPhone = userInfoRS.getString("phone");
+                    existingPassword = userInfoRS.getString("password");
+                    existingUsername = userInfoRS.getString("username");
 
-                        userArray.add(existingUser);
-                        userArray.add(existingMail);
-                        userArray.add(existingPhone);
-                        userArray.add(existingPassword);
-                        userArray.add(existingUsername);
+                    userArray.add(existingUser);
+                    userArray.add(existingMail);
+                    userArray.add(existingPhone);
+                    userArray.add(existingPassword);
+                    userArray.add(existingUsername);
 
-                         nameLabel = new JTextField(existingUser);
-                         emailLabel = new JTextField(existingMail);
-                         phoneLabel = new JTextField(existingPhone);
-                         passwordLabel = new JTextField(existingPassword);
-                         usernameLabel = new JTextField(existingUsername);
+                    nameLabel = new JTextField(existingUser);
+                    emailLabel = new JTextField(existingMail);
+                    phoneLabel = new JTextField(existingPhone);
+                    passwordLabel = new JTextField(existingPassword);
+                    usernameLabel = new JTextField(existingUsername);
 
-                        editInfoPanel.add(nameLabel);
-                        editInfoPanel.add(emailLabel);
-                        editInfoPanel.add(phoneLabel);
-                        editInfoPanel.add(passwordLabel);
-                        editInfoPanel.add(usernameLabel);
-                        JButton inserBtn = new JButton("Update info");
-                        editInfoPanel.add(inserBtn);
-                        inserBtn.addMouseListener(new MouseAdapter() {
-                            @Override
-                            public void mouseClicked(MouseEvent e) {
-                                try {
-                                    updateInfo();
-                                    editInfoPanel.revalidate();
-                                    editInfoPanel.repaint();
-                                } catch (SQLException ex) {
-                                    ex.printStackTrace();
-                                }
-                            }});
+                    editInfoPanel.add(nameLabel);
+                    editInfoPanel.add(emailLabel);
+                    editInfoPanel.add(phoneLabel);
+                    editInfoPanel.add(passwordLabel);
+                    editInfoPanel.add(usernameLabel);
+                    JButton inserBtn = new JButton("Update info");
+                    editInfoPanel.add(inserBtn);
+                    inserBtn.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            try {
+                                updateInfo();
+                                editInfoPanel.revalidate();
+                                editInfoPanel.repaint();
+                            } catch (SQLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    });
 
 
 
@@ -409,35 +410,40 @@ public class GUI {
                 throw new RuntimeException(e);
             }
         } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
-
+            throw new RuntimeException(e);
         }
 
-        public void updateInfo() throws SQLException {
-            try (Connection conn = Database.getInstance().getConnection()) {
 
-                String updateSQL = " UPDATE userTable SET name = ?, email = ?, phone = ?, password = ? WHERE username = ?";
-                try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)) {
-                    updatePstmt.setString(1, nameLabel.getText());
-                    updatePstmt.setString(2, emailLabel.getText());
-                    updatePstmt.setString(3, phoneLabel.getText());
-                    updatePstmt.setString(4, passwordLabel.getText());
-                    updatePstmt.setString(5, usernameLabel.getText());
-                    int rowsUpdated = updatePstmt.executeUpdate();
-                    System.out.println(rowsUpdated + "changes made!");
-                }
+    }
+
+    public void updateInfo() throws SQLException {
+        try (Connection conn = Database.getInstance().getConnection()) {
+
+            String updateSQL = " UPDATE userTable SET name = ?, email = ?, phone = ?, password = ? WHERE username = ?";
+            try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)) {
+                updatePstmt.setString(1, nameLabel.getText());
+                updatePstmt.setString(2, emailLabel.getText());
+                updatePstmt.setString(3, phoneLabel.getText());
+                updatePstmt.setString(4, passwordLabel.getText());
+                updatePstmt.setString(5, usernameLabel.getText());
+                int rowsUpdated = updatePstmt.executeUpdate();
+                System.out.println(rowsUpdated + "changes made!");
             }
         }
+    }
+
     public void addBook() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
 
-            java.sql.Date currentDate = new java.sql.Date(System.currentTimeMillis());
-            java.sql.Date returnDate = currentDate.d
+            Date currentDate = new Date(System.currentTimeMillis());
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(currentDate);
+            calendar.add(Calendar.DAY_OF_MONTH, 30);
 
+            Date returnDate = new Date(calendar.getTimeInMillis());
 
             String userInfo = "SELECT userID FROM userTable WHERE username = ?";
+
             PreparedStatement uinfoPSTMT = conn.prepareStatement(userInfo);
             uinfoPSTMT.setString(1, usernameTextfield.getText());
             ResultSet userinfoRS = uinfoPSTMT.executeQuery();
@@ -456,16 +462,74 @@ public class GUI {
                 bookID = bookinfoRS.getInt("bookID");
             }
 
+            String reservationInfo = "SELECT available FROM bookTable WHERE bookID = ?";
+            PreparedStatement rPSTMT = conn.prepareStatement(reservationInfo);
+            rPSTMT.setInt(1, bookID);
+            ResultSet reserveinfoRS = rPSTMT.executeQuery();
+            boolean booked = true;
+            if (reserveinfoRS.next()) {
+                booked = reserveinfoRS.getBoolean("available");
+            }
+            if (booked) {
+                String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID, borrowedDate) VALUES (?,?,?,?)";
+                String reservedStatus = "UPDATE bookTable SET available = ? WHERE bookID = ?";
 
-            String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID) VALUES (?,?,?)";
-            PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
-            binfoPSTMT.setDate(1, currentDate);
-            binfoPSTMT.setInt(2, userID);
-            binfoPSTMT.setInt(3, bookID);
-            int updateReservation = binfoPSTMT.executeUpdate();
-            System.out.println("Added books!" + " User ID is: " + userID + "  Book ID is: " + bookID + "  username is: " + usernameTextfield.getText() + " Date is: " + currentDate);
+                PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
+                PreparedStatement reservedPSTMT = conn.prepareStatement(reservedStatus);
+
+                binfoPSTMT.setDate(1, returnDate);
+                binfoPSTMT.setInt(2, userID);
+                binfoPSTMT.setInt(3, bookID);
+                binfoPSTMT.setDate(4, currentDate);
+
+                reservedPSTMT.setBoolean(1, false);
+                reservedPSTMT.setInt(2, bookID);
+
+                System.out.println(bookID + " booked!");
+
+                int updateReservation = binfoPSTMT.executeUpdate();
+                int reserveBook = reservedPSTMT.executeUpdate();
+
+            } else {
+                System.out.println("Book is currently not available. Return date is: " + returnDate);
+            }
         }
     }
 
+    public void history() {
+        String getuserID = "SELECT userID FROM userTable WHERE username = ?";
 
+        String reservedInfo = "SELECT * FROM reserveBook WHERE userID = ?";
+
+        ArrayList<String> reservedArray = new ArrayList<>(); // endast en array kamske?
+
+        try (Connection conn = Database.getInstance().getConnection()) {
+            PreparedStatement getuserIDPstmt = conn.prepareStatement(getuserID);
+            PreparedStatement reservedInfoPstmt = conn.prepareStatement(reservedInfo);
+            {
+                getuserIDPstmt.setString(1, usernameTextfield.getText());
+                ResultSet usersIDRS = getuserIDPstmt.executeQuery();
+                int usersID = 0;
+                if (usersIDRS.next()){
+                    usersID = usersIDRS.getInt("userID");
+                }
+
+                reservedInfoPstmt.setInt(1, usersID);
+                ResultSet bookRs = reservedInfoPstmt.executeQuery();
+
+                bookDTable.setRowCount(0);
+
+                String reservedBooks;
+                while (bookRs.next()) {
+
+                }
+                for (String reserved : reservedArray) {
+                }
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
