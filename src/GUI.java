@@ -1,6 +1,8 @@
 package src;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -17,6 +19,8 @@ public class GUI {
     public JFrame frame = new JFrame("Library");
 
     public JPanel mainPanel = new JPanel();
+    public JPanel editInfoPanel = new JPanel();
+
     CardLayout cl = new CardLayout();
 
 
@@ -37,6 +41,14 @@ public class GUI {
     JScrollPane scrollPane = new JScrollPane(bookTable);
 
 
+    // edit info page
+    DefaultTableModel editDTable = new DefaultTableModel();
+    JTable editTable = new JTable(editDTable);
+    JScrollPane editscrollPane = new JScrollPane(editTable);
+
+    JPanel userinfoPanel = new JPanel();
+
+
     JTextField searchField;
 
     public GUI() throws SQLException {
@@ -46,17 +58,28 @@ public class GUI {
 
         //Register panel
         JPanel registerPanel = new JPanel();
-        registerPanel.setLayout(new GridLayout(5,1));
+        registerPanel.setLayout(new GridLayout(6,1));
+        JLabel nameLabel = new JLabel("Name:");
         nametextField = new JTextField();
+        JLabel emailLabel = new JLabel("Email:");
         emailTextfield = new JTextField();
+        JLabel phoneLabel = new JLabel("Phone:");
         phoneTextfield = new JTextField();
+        JLabel usernameLable = new JLabel("Username:");
         newusernameTextfield = new JTextField();
+        JLabel passwordLabel = new JLabel("Password:");
+
         newpasswordTextfield = new JTextField();
         // finns sätt att bara ha enj textfield men ta in variabel för input? -- while loop skapa 7
+        registerPanel.add(nameLabel);
         registerPanel.add(nametextField);
+        registerPanel.add(emailLabel);
         registerPanel.add(emailTextfield);
+        registerPanel.add(phoneLabel);
         registerPanel.add(phoneTextfield);
+        registerPanel.add(usernameLable);
         registerPanel.add(newusernameTextfield);
+        registerPanel.add(passwordLabel);
         registerPanel.add(newpasswordTextfield);
         JButton addRegister = new JButton("Register");
         registerPanel.add(addRegister);
@@ -64,6 +87,7 @@ public class GUI {
         addRegister.addActionListener(e -> {
             try {
                 registerMethod();
+
             } catch (SQLException ex) {
                 throw new RuntimeException(ex);
             }
@@ -111,21 +135,49 @@ public class GUI {
         JLabel searchLabel = new JLabel("Sök Böcker efter namn, författare osv");
         searchField = new JTextField();
         JButton searchButton = new JButton("Sök böcker");
+        JButton editInfoBTN = new JButton("Edit info");
+
+
+        // min sida / edit info page
+        editInfoPanel.setLayout(new GridLayout(2,2));
+        //editInfoPanel.add(editscrollPane);
+        userinfoPanel.setSize(100,100);
+        userinfoPanel.setLayout(new GridLayout(2,2));
+        editInfoPanel.add(userinfoPanel);
+
+
+
+
+
+        editInfoBTN.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cl.show(mainPanel,"editInfoPanel");
+                retrieveInfo();
+            }
+        });
+
+
+
+
         searchButton.addActionListener(e ->
                 checkBooks()
         );
         homepagePanel.add(searchLabel);
         homepagePanel.add(searchField);
         homepagePanel.add(searchButton);
+        homepagePanel.add(editInfoBTN);
         bookDTable.addColumn("Böcker");
         homepagePanel.add(scrollPane);
-        // Min sida panel
 
+        // Min sida panel
 
 
         mainPanel.add(loginPanel,"loginPanel");
         mainPanel.add(registerPanel, "registerPanel");
         mainPanel.add(homepagePanel,"homepagePanel");
+        mainPanel.add(editInfoPanel,"editInfoPanel");
+
 
         frame.pack();
         frame.setSize(500,500);
@@ -156,6 +208,7 @@ public class GUI {
         try (Connection conn = Database.getInstance().getConnection()) {
             String newUser = "INSERT INTO userTable (name, email, phone, password, username) VALUES (?,?,?,?,?)";
             PreparedStatement pstmt = conn.prepareStatement(newUser);
+            JLabel regNameLbl = new JLabel("Name: " );
             pstmt.setString(1, nametextField.getText());
             pstmt.setString(2, emailTextfield.getText());
             pstmt.setString(3, phoneTextfield.getText());
@@ -166,7 +219,7 @@ public class GUI {
             System.out.println("Rows affected: " + affectedRows);
             pstmt.close();
             cl.show(mainPanel,"loginPanel");
-        } catch (java.sql.SQLIntegrityConstraintViolationException e){
+        } catch (SQLIntegrityConstraintViolationException e){
             System.out.println("User already exists!");
             String error = e.getMessage();
 
@@ -200,7 +253,7 @@ public class GUI {
     public void checkBooks(){
         String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
         String searchInput = searchField.getText();
-        ArrayList<String> bookArray = new ArrayList<>();
+        ArrayList<String> bookArray = new ArrayList<>(); // endast en array kamske?
 
         try (Connection conn = Database.getInstance().getConnection()){
             PreparedStatement bookPstmt = conn.prepareStatement(searchBook);
@@ -210,7 +263,7 @@ public class GUI {
 
                 bookDTable.setRowCount(0);
 
-                String existingBooks = null;
+                String existingBooks;
                 while (bookRs.next()) {
                     existingBooks = bookRs.getString("bookName");
                     bookArray.add(existingBooks);
@@ -228,4 +281,98 @@ public class GUI {
             throw new RuntimeException(e);
         }
         }
-}
+        /*public void updateInfo() throws SQLException {
+
+                    String updateSQL = "UPDATE userTable SET name = ? WHERE username = ?";
+                    try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)){
+                        updatePstmt.setString(1, nameUpdate);
+                        updatePstmt.setString(2, insertUsername);
+                        int rowsUpdated = updatePstmt.executeUpdate();
+                        System.out.println("Update done!");
+                    }
+                }
+        }*/
+
+        public void retrieveInfo(){
+            ArrayList<String> userArray = new ArrayList<>();
+            try (Connection conn = Database.getInstance().getConnection()) {
+                String userInfo = "SELECT * FROM userTable WHERE username = ?";
+
+
+                try (PreparedStatement userInfoPstmt = conn.prepareStatement(userInfo)) {
+                    userInfoPstmt.setString(1, usernameTextfield.getText());
+                    ResultSet userInfoRS = userInfoPstmt.executeQuery();
+
+
+                    String existingUser = null;
+                    String existingMail = null;
+                    String existingPhone = null;
+                    String existingPassword = null;
+                    String existingUsername = null;
+
+
+
+                    editDTable.setRowCount(0);
+
+                    String existingUsers;
+
+
+                    while (userInfoRS.next()) {
+                        existingUser = userInfoRS.getString("name");
+                        existingMail = userInfoRS.getString("email");
+                        existingPhone = userInfoRS.getString("phone");
+                        existingPassword = userInfoRS.getString("password");
+                        existingUsername = userInfoRS.getString("username");
+
+                        userArray.add(existingUser);
+                        userArray.add(existingMail);
+                        userArray.add(existingPhone);
+                        userArray.add(existingPassword);
+                        userArray.add(existingUsername);
+
+                        JLabel nameLabel = new JLabel("Name: " + existingUser);
+                        JLabel emailLabel = new JLabel("Email: " + existingMail);
+                        JLabel phoneLabel = new JLabel("Phone: " + existingPhone);
+                        JLabel passwordLabel = new JLabel("Password: " + existingPassword);
+                        JLabel usernameLabel = new JLabel("Username: " + existingUsername);
+                        editInfoPanel.add(nameLabel);
+                        editInfoPanel.add(emailLabel);
+                        editInfoPanel.add(phoneLabel);
+                        editInfoPanel.add(passwordLabel);
+                        editInfoPanel.add(usernameLabel);
+
+                        nameLabel.addMouseListener(new MouseAdapter() {
+                            @Override
+                            public void mouseClicked(MouseEvent e) {
+                                super.mouseClicked(e);
+                                JTextField insertName = new JTextField();
+                                JButton inserBtn = new JButton("New name: ");
+                                editInfoPanel.add(insertName);
+                                editInfoPanel.add(inserBtn);
+                                editInfoPanel.revalidate();
+                                editInfoPanel.repaint();
+                                inserBtn.addMouseListener(Mo);
+                            }
+                        });
+
+
+
+                   /* while (userInfoRS.next()) {
+                        existingUser = userInfoRS.getString("name");
+                        userArray.add(existingUser);
+                    }
+                    for (String user : userArray) {
+                        editDTable.addRow(new Object[]{user});
+                    }*/
+
+
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+
+
+        }}
