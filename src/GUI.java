@@ -330,7 +330,7 @@ public class GUI {
         }
 }*/
     public void checkBooks() {
-        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ? OR author LIKE ?";
+        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ? OR author LIKE ? ORDER BY bookName";
         String searchInput = searchField.getText();
         ArrayList<String> bookArray = new ArrayList<>(); // endast en array kamske?
 
