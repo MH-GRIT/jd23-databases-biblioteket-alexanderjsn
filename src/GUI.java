@@ -330,7 +330,7 @@ public class GUI {
         }
 }*/
     public void checkBooks() {
-        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ?";
+        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ? OR author LIKE ?";
         String searchInput = searchField.getText();
         ArrayList<String> bookArray = new ArrayList<>(); // endast en array kamske?
 
@@ -338,6 +338,7 @@ public class GUI {
             PreparedStatement bookPstmt = conn.prepareStatement(searchBook);
             {
                 bookPstmt.setString(1, "%" + searchInput + "%");
+                bookPstmt.setString(2, "%" + searchInput + "%");
                 ResultSet bookRs = bookPstmt.executeQuery();
 
                 bookDTable.setRowCount(0);
