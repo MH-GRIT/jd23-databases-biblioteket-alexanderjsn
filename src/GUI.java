@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.sql.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.xml.crypto.Data;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -71,6 +72,10 @@ public class GUI {
     JTextField passwordLabel;
     JTextField usernameLabel;
 
+    //history
+    public JPanel historyPanel = new JPanel();
+
+
     public GUI() throws SQLException {
 
         frame.add(mainPanel);
@@ -78,26 +83,30 @@ public class GUI {
 
 
         // 'history panel
-        JPanel historyPanel = new JPanel();
 
         JButton returnBTN = new JButton("Lämna tillbaka");
+        reservedbookDTable.addColumn("Återlämningsdatum");
+        reservedbookDTable.addColumn("Boknamn");
+        reservedbookDTable.addColumn("Lånat Datum");
 
         reservedbookTable.getSelectionModel().addListSelectionListener(e -> {
             int reservedbookInt = reservedbookTable.getSelectedRow();
             //hämtar text värdet inuti row
-            reservedBookSelected = (String) reservedbookTable.getValueAt(reservedbookInt, 0);
+            reservedBookSelected = (String) reservedbookTable.getValueAt(reservedbookInt, 1);
             System.out.println(reservedbookInt + reservedBookSelected);
         });
 
         historyPanel.add(returnBTN);
         returnBTN.addActionListener(e ->
         {
-            returnBook();
+            try {
+                returnBook();
+                System.out.println(reservedBookSelected);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
             System.out.println("Returned" + reservedBookSelected);
         });
-
-
-
 
 
         //Register panel
@@ -145,7 +154,7 @@ public class GUI {
         JPanel loginPanel = new JPanel();
         loginPanel.setLayout(new GridLayout(5, 1));
 
-        JLabel usernameLabel = new JLabel("Anvädarnamn: ");
+        JLabel usernameLabel = new JLabel("Användarnamn: ");
         loginPanel.add(usernameLabel);
         usernameTextfield = new JTextField();
         loginPanel.add(usernameTextfield);
@@ -235,8 +244,9 @@ public class GUI {
         homepagePanel.add(searchField);
         homepagePanel.add(searchButton);
         homepagePanel.add(editInfoBTN);
-        bookDTable.addColumn("Böcker");
-        reservedbookDTable.addColumn("Lånade");
+        bookDTable.addColumn("Namn");
+        bookDTable.addColumn("Författare");
+        bookDTable.addColumn("Ledig");
         homepagePanel.add(scrollPane);
 
         // Min sida panel
@@ -334,12 +344,15 @@ public class GUI {
 
                 String existingBooks;
                 while (bookRs.next()) {
-                    existingBooks = bookRs.getString("bookName");
+                    String bookName = bookRs.getString("bookName");
+                   String  bookAuthor = bookRs.getString("author");
+                    boolean bookStock = bookRs.getBoolean("available");
+                    existingBooks = bookName + bookAuthor + bookStock;
                     bookArray.add(existingBooks);
+                    bookDTable.addRow(new Object[]{bookName,bookAuthor,bookStock});
+
                 }
-                for (String book : bookArray) {
-                    bookDTable.addRow(new Object[]{book});
-                }
+
                /* if (existingBooks != null) {
                     System.out.println("WOW!");
                     System.out.println(bookRs.getInt("bookID") + bookRs.getString("bookName") + bookRs.getInt("stock"));
@@ -534,7 +547,6 @@ public class GUI {
         String getuserID = "SELECT userID FROM userTable WHERE username = ?";
 
 
-
         String reservedInfo = "SELECT * FROM reserveBook WHERE userID = ?";
 
         ArrayList<String> reservedArray = new ArrayList<>(); // endast en array kamske?
@@ -546,7 +558,7 @@ public class GUI {
                 getuserIDPstmt.setString(1, usernameTextfield.getText());
                 ResultSet usersIDRS = getuserIDPstmt.executeQuery();
                 int usersID = 0;
-                if (usersIDRS.next()){
+                if (usersIDRS.next()) {
                     usersID = usersIDRS.getInt("userID");
                 }
 
@@ -557,12 +569,12 @@ public class GUI {
 
                 String reservedBooks;
                 while (reservedRS.next()) {
-                Date returnDate = reservedRS.getDate("returnDate");
-                Date borrowedDate = reservedRS.getDate("borrowedDate");
-                String bookName = reservedRS.getString("bookName");
-                reservedBooks = returnDate + bookName + borrowedDate;
-                reservedArray.add(reservedBooks);
-                    reservedbookDTable.addRow(new Object[]{reservedBooks});
+                    Date returnDate = reservedRS.getDate("returnDate");
+                    Date borrowedDate = reservedRS.getDate("borrowedDate");
+                    String bookName = reservedRS.getString("bookName");
+                    reservedBooks = returnDate + bookName + borrowedDate;
+                    reservedArray.add(reservedBooks);
+                    reservedbookDTable.addRow(new Object[]{returnDate,bookName,borrowedDate});
                 }
 
             }
@@ -572,57 +584,44 @@ public class GUI {
             throw new RuntimeException(e);
         }
     }
-   public void returnBook(){
 
-       try (Connection conn = Database.getInstance().getConnection()) {
+    public void returnBook() throws SQLException {
+    try(Connection conn = Database.getInstance().getConnection()){
+        String bookInfo = "SELECT bookID FROM bookTable WHERE bookName = ?";
+        PreparedStatement retPSTMT = conn.prepareStatement(bookInfo);
+        retPSTMT.setString(1, reservedBookSelected);
+        ResultSet bookInfoRS = retPSTMT.executeQuery();
+        int bookID = 0;
+        if (bookInfoRS.next()){
+            bookID = bookInfoRS.getInt("bookID");
+        }
 
+        String reservedUserInfo = "SELECT userID FROM userTable WHERE username = ?";
+        PreparedStatement resusPSTMT = conn.prepareStatement(reservedUserInfo);
+        resusPSTMT.setString(1, usernameTextfield.getText());
+        ResultSet userInfoRS = resusPSTMT.executeQuery();
+        int userID = 0;
+        if (userInfoRS.next()){
+            userID = userInfoRS.getInt("userID");
+            System.out.println("user id :      " + userID);
+            System.out.println("book ID is:      " + bookID);
+        }
 
-           String bookInfo = "SELECT bookID FROM bookTable WHERE bookName = ?";
-           PreparedStatement bpstmt = conn.prepareStatement(bookInfo);
-           bpstmt.setString(1, testt);
-           ResultSet bookinfoRS = bpstmt.executeQuery();
-           int bookID = 0;
-           if (bookinfoRS.next()) {
-               bookID = bookinfoRS.getInt("bookID");
-           }
+        String returnBook = "UPDATE bookTable SET available = ? WHERE bookID = ?";
+        PreparedStatement returnedPSTMT = conn.prepareStatement(returnBook);
+        returnedPSTMT.setBoolean(1,true);
+        returnedPSTMT.setInt(2,bookID);
+        int booksReturned = returnedPSTMT.executeUpdate();
+        System.out.println(bookID + "  returned succesfully! ");
 
-           String reservationInfo = "SELECT available FROM bookTable WHERE bookID = ?";
-           PreparedStatement rPSTMT = conn.prepareStatement(reservationInfo);
-           rPSTMT.setInt(1, bookID);
-           ResultSet reserveinfoRS = rPSTMT.executeQuery();
-           boolean booked = true;
-           if (reserveinfoRS.next()) {
-               booked = reserveinfoRS.getBoolean("available");
-           }
-           if (booked) {
-               String addBook = "INSERT INTO reserveBook (returnDate, userID, bookID, borrowedDate, bookName) VALUES (?,?,?,?,?)";
-               String reservedStatus = "UPDATE bookTable SET available = ? WHERE bookID = ?";
+        String deleteResRow = "DELETE FROM reserveBook WHERE userID = ? AND bookID = ?";
+        PreparedStatement deletePstmt = conn.prepareStatement(deleteResRow);
+        deletePstmt.setInt(1, userID);
+        deletePstmt.setInt(2,bookID);
+        int rowsDeleter = deletePstmt.executeUpdate();
+        historyPanel.repaint();
+        historyPanel.revalidate();
 
-               PreparedStatement binfoPSTMT = conn.prepareStatement(addBook);
-               PreparedStatement reservedPSTMT = conn.prepareStatement(reservedStatus);
-
-               binfoPSTMT.setDate(1, returnDate);
-               binfoPSTMT.setInt(2, userID);
-               binfoPSTMT.setInt(3, bookID);
-               binfoPSTMT.setDate(4, currentDate);
-               binfoPSTMT.setString(5, testt);
-
-
-               reservedPSTMT.setBoolean(1, false);
-               reservedPSTMT.setInt(2, bookID);
-
-               System.out.println(bookID + " booked!");
-
-               int updateReservation = binfoPSTMT.executeUpdate();
-               int reserveBook = reservedPSTMT.executeUpdate();
-
-           } else {
-               System.out.println("Book is currently not available. Return date is: " + returnDate);
-           }
-       } catch (SQLException e) {
-           throw new RuntimeException(e);
-       }
-
-
-   };
+    }
+    }
 }
