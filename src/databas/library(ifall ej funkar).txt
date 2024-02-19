@@ -1,0 +1,117 @@
+CREATE DATABASE library;
+USE library;
+
+
+CREATE TABLE userTable(
+    userID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(255),
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE bookTable(
+    bookID INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    bookName VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+	available BOOLEAN not null
+
+);
+
+
+DELETE FROM bookTable;
+DELETE FROM userTable;
+DELETE FROM reserveBook;
+
+
+
+INSERT INTO bookTable(bookName, stock) VALUES ("Havet", 1);
+
+
+LOAD DATA INFILE 'C:\\Users\\Alexander\\Documents\\books_from_list.csv'
+INTO TABLE bookTable
+FIELDS TERMINATED BY ','
+LINES TERMINATED BY '\n'
+(bookName, author, stock);
+
+SELECT * FROM userTable;
+SELECT * FROM bookTable;
+
+
+ALTER TABLE bookTable
+ADD COLUMN author VARCHAR(255) NOT NULL;
+
+ALTER TABLE userTable
+DROP COLUMN author;
+
+
+CREATE TABLE reserveBook(
+    reservationID INT PRIMARY KEY AUTO_INCREMENT,
+    returnDate DATE NOT NULL,
+    userID INT NOT NULL,
+    bookID INT NOT NULL,
+    bookName VARCHAR(255) NOT NULL,
+    borrowedDate DATE NOT NULL,
+    available BOOLEAN NOT NULL,
+    FOREIGN KEY (userID) REFERENCES userTable(userID),
+    FOREIGN KEY (bookID) REFERENCES bookTable(bookID)
+    FOREIGN KEY (bookName) REFERENCES bookTable(bookName)
+);
+
+SELECT * FROM reserveBook;
+
+INSERT INTO reserveBook (returnDate, userID, bookID) VALUES ('2012-12-12', 1, 1);
+
+ALTER TABLE reserveBook
+DROP COLUMN returnedbookDate;
+
+
+ALTER TABLE reserveBook
+ADD COLUMN bookName VARCHAR(255) NOT NULL;
+
+
+TRUNCATE TABLE reserveBook;
+
+SELECT * FROM userTable;
+SELECT * FROM bookTable;
+SELECT * FROM reserveBook;
+
+ALTER TABLE bookTable
+DROP COLUMN stock;
+
+ALTER TABLE reserveBook ADD COLUMN returnedbookDate DATE;
+
+
+
+INSERT INTO bookTable (bookName, author, available) VALUES
+('1984', 'George Orwell', 1),
+('To Kill a Mockingbird', 'Harper Lee', 1),
+('The Great Gatsby', 'F. Scott Fitzgerald', 1),
+('Pride and Prejudice', 'Jane Austen', 1),
+('Moby-Dick', 'Herman Melville', 1),
+('War and Peace', 'Leo Tolstoy', 1),
+('The Catcher in the Rye', 'J.D. Salinger', 1),
+('The Lord of the Rings', 'J.R.R. Tolkien', 1),
+('Great Expectations', 'Charles Dickens', 1),
+('One Hundred Years of Solitude', 'Gabriel García Márquez', 1),
+('Crime and Punishment', 'Fyodor Dostoevsky', 1),
+('The Brothers Karamazov', 'Fyodor Dostoevsky', 1),
+('Wuthering Heights', 'Emily Bronte', 1),
+('Anna Karenina', 'Leo Tolstoy', 1),
+('The Adventures of Huckleberry Finn', 'Mark Twain', 1),
+('The Picture of Dorian Gray', 'Oscar Wilde', 1),
+('The Hobbit', 'J.R.R. Tolkien', 1),
+('Brave New World', 'Aldous Huxley', 1),
+('Fahrenheit 451', 'Ray Bradbury', 1),
+('Les Misérables', 'Victor Hugo', 1),
+('Lolita', 'Vladimir Nabokov', 1),
+('Don Quixote', 'Miguel de Cervantes', 1),
+('Frankenstein', 'Mary Shelley', 1),
+('Jane Eyre', 'Charlotte Bronte', 1),
+('A Tale of Two Cities', 'Charles Dickens', 1),
+('Heart of Darkness', 'Joseph Conrad', 1),
+('Catch-22', 'Joseph Heller', 1),
+('Gone with the Wind', 'Margaret Mitchell', 1),
+('The Alchemist', 'Paulo Coelho', 1),
+('The Grapes of Wrath', 'John Steinbeck', 1);

@@ -1,0 +1,42 @@
+-- MySQL dump 10.13  Distrib 8.0.18, for Win64 (x86_64)
+--
+-- Host: localhost    Database: library
+-- ------------------------------------------------------
+-- Server version	11.4.0-MariaDB
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `booktable`
+--
+
+DROP TABLE IF EXISTS `booktable`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `booktable` (
+  `bookID` int(11) NOT NULL AUTO_INCREMENT,
+  `bookName` varchar(255) NOT NULL,
+  `author` varchar(255) NOT NULL,
+  `available` tinyint(1) NOT NULL,
+  PRIMARY KEY (`bookID`)
+) ENGINE=InnoDB AUTO_INCREMENT=113 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `booktable`
+--
+
+LOCK TABLES `booktable` WRITE;
+/*!40000 ALTER TABLE `booktable` DISABLE KEYS */;
+INSERT INTO `booktable` VALUES (83,'1984','George Orwell',1),(84,'To Kill a Mockingbird','Harper Lee',1),(85,'The Great Gatsby','F. Scott Fitzgerald',1),(86,'Pride and Prejudice','Jane Austen',1),(87,'Moby-Dick','Herman Melville',1),(88,'War and Peace','Leo Tolstoy',1),(89,'The Catcher in the Rye','J.D. Salinger',1),(90,'The Lord of the Rings','J.R.R. Tolkien',1),(91,'Great Expectations','Charles Dickens',1),(92,'One Hundred Years of Solitude','Gabriel García Márquez',1),(93,'Crime and Punishment','Fyodor Dostoevsky',1),(94,'The Brothers Karamazov','Fyodor Dostoevsky',1),(95,'Wuthering Heights','Emily Bronte',1),(96,'Anna Karenina','Leo Tolstoy',1),(97,'The Adventures of Huckleberry Finn','Mark Twain',1),(98,'The Picture of Dorian Gray','Oscar Wilde',1),(99,'The Hobbit','J.R.R. Tolkien',1),(100,'Brave New World','Aldous Huxley',0),(101,'Fahrenheit 451','Ray Bradbury',1),(102,'Les Misérables','Victor Hugo',1),(103,'Lolita','Vladimir Nabokov',1),(104,'Don Quixote','Miguel de Cervantes',1),(105,'Frankenstein','Mary Shelley',1),(106,'Jane Eyre','Charlotte Bronte',1),(107,'A Tale of Two Cities','Charles Dickens',1),(108,'Heart of Darkness','Joseph Conrad',1),(109,'Catch-22','Joseph Heller',0),(110,'Gone with the Wind','Margaret Mitchell',1),(111,'The Alchemist','Paulo Coelho',1),(112,'The Grapes of Wrath','John Steinbeck',1);
+/*!40000 ALTER TABLE `booktable` ENABLE KEYS */;
+UNLOCK TABLES;
