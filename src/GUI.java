@@ -61,6 +61,10 @@ public class GUI {
     private  JTextField usernameLabel = new JTextField();
     private  JPanel registerPanel = new JPanel();
 
+    private final LocalDate currentDate = LocalDate.now();
+    private final LocalDate returnDate = currentDate.plusMonths(1);
+
+
 
     //history
     private final JPanel historyPanel = new JPanel();
@@ -71,6 +75,9 @@ public class GUI {
     public GUI()  {
 
         frame.add(mainPanel);
+
+
+        //card layout
         mainPanel.setLayout(cl);
 
         // history panel
@@ -99,16 +106,16 @@ public class GUI {
 
     public void loginMethod() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
-            String checkLogin = "SELECT password FROM userTable WHERE username = ?";
-            try (PreparedStatement loginPstmt = conn.prepareStatement(checkLogin)) {
+            String checkLogin = "SELECT password FROM userTable WHERE username = ?";    // tar lösenordet från userTable och jämnfför
+            try (PreparedStatement loginPstmt = conn.prepareStatement(checkLogin)) { // med användarinput
                 loginPstmt.setString(1, usernameTextfield.getText());
                 ResultSet loginRs = loginPstmt.executeQuery();
                 if (loginRs.next()) {
-                    String existingPassword = loginRs.getString("password");
-                    if (passwordInput.equals(existingPassword)) {
+                    String existingPassword = loginRs.getString("password");    //  tar lösenordet och jämnfför
+                    if (passwordInput.equals(existingPassword)) {                           // med inskrivet lösenord
                         cl.show(mainPanel, "homepagePanel");
                     } else {
-                        JOptionPane.showMessageDialog(frame, "Login Failed Successfully!");
+                        JOptionPane.showMessageDialog(frame, "Login Failed!");
                     }
 
                 }
@@ -125,14 +132,13 @@ public class GUI {
             pstmt.setString(3, phoneTextfield.getText());
             pstmt.setString(4, newpasswordTextfield.getText());
             pstmt.setString(5, newusernameTextfield.getText());
-
-            int affectedRows = pstmt.executeUpdate();
-            System.out.println("Rows affected: " + affectedRows);
+                                                // sätter input värden på textfields som inserts
+            pstmt.executeUpdate();
             pstmt.close();
-            cl.show(mainPanel, "loginPanel");
+            cl.show(mainPanel, "loginPanel");   //tar fram main mage vid lyckad inlogg
         } catch (SQLIntegrityConstraintViolationException e) {
             System.out.println("User already exists!");
-            String error = e.getMessage();
+            String error = e.getMessage();              // felhantering
 
             if (error.contains("name")) {
                 System.out.println("Name taken");
@@ -148,7 +154,7 @@ public class GUI {
 
 
     public void checkBooks() {
-        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ? OR author LIKE ? ORDER BY bookName";
+        String searchBook = "SELECT * FROM bookTable WHERE bookName LIKE ? OR author LIKE ? ORDER BY bookName";        // tar in ungefärvärde, sorterat
         String searchInput = searchField.getText();
 
         try (Connection conn = Database.getInstance().getConnection()) {
@@ -165,11 +171,12 @@ public class GUI {
                     String bookAuthor = bookRs.getString("author");
                     boolean bookStock = bookRs.getBoolean("available");
                     bookDTable.addRow(new Object[]{bookName, bookAuthor, bookStock});
-
+                    // skriver ut i table
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
+            // mer här
         }
     }
 
@@ -186,9 +193,9 @@ public class GUI {
 
                     editDTable.setRowCount(0);
 
+                    // sätter nurvarande användaruppgifter på textfields labels
 
                     if (userInfoRS.next()) {
-
                         nameLabel.setText(userInfoRS.getString("name"));
                         emailLabel.setText(userInfoRS.getString("email"));
                         phoneLabel.setText(userInfoRS.getString("phone"));
@@ -211,6 +218,8 @@ public class GUI {
                                 updateInfo();
                                 editInfoPanel.revalidate();
                                 editInfoPanel.repaint();
+                                cl.show(mainPanel, "homepagePanel");
+
                             } catch (SQLException ex) {
                                 ex.printStackTrace();
                             }
@@ -229,6 +238,7 @@ public class GUI {
     public void updateInfo() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
 
+            // samma som ovan men en uppdatering
             String updateSQL = " UPDATE userTable SET name = ?, email = ?, phone = ?, password = ? WHERE username = ?";
             try (PreparedStatement updatePstmt = conn.prepareStatement(updateSQL)) {
                 updatePstmt.setString(1, nameLabel.getText());
@@ -236,8 +246,7 @@ public class GUI {
                 updatePstmt.setString(3, phoneLabel.getText());
                 updatePstmt.setString(4, passwordLabel.getText());
                 updatePstmt.setString(5, usernameLabel.getText());
-                int rowsUpdated = updatePstmt.executeUpdate();
-                System.out.println(rowsUpdated + "changes made!");
+                updatePstmt.executeUpdate();
             }
         }
     }
@@ -247,8 +256,6 @@ public class GUI {
 
             // hämtar dagen datum + en månads datum
 
-            LocalDate currentDate = LocalDate.now();
-            LocalDate returnDate = currentDate.plusMonths(1);
 
 
             String userInfo = "SELECT userID FROM userTable WHERE username = ?";
@@ -322,13 +329,15 @@ public class GUI {
                 getuserIDPstmt.setString(1, usernameTextfield.getText());
                 try (ResultSet usersIDRS = getuserIDPstmt.executeQuery()) {
                     // tömmer table
-                    reservedbookDTable.setRowCount(0);
+
                     // fyller table med data om lånade böcker som hämtas från resultset
                     while (usersIDRS.next()) {
                         Date returnDate = usersIDRS.getDate("returnDate");
                         Date borrowedDate = usersIDRS.getDate("borrowedDate");
                         String bookName = usersIDRS.getString("bookName");
                         reservedbookDTable.addRow(new Object[]{returnDate, bookName, borrowedDate});
+                        reservedbookTable.revalidate();
+                        reservedbookTable.repaint();
                     }
 
                 }
@@ -341,9 +350,9 @@ public class GUI {
 
     public void returnBook() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
-            int bookID = 0, userID = 0;
+            int bookID = 0, userID = 0, reservationID = 0;
                                 // hämta bookID och userID inuti reservebook (foreign key)
-            String bookInfo = "SELECT reserveBook.bookID, reserveBook.userID FROM reserveBook reserveBook " +
+            String bookInfo = "SELECT reserveBook.bookID, reserveBook.userID, reserveBook.reservationID FROM reserveBook reserveBook " +
                                 // sätt ihop usertable och reservebook (samma med bok )
                               "JOIN userTable userTable ON reserveBook.userID = userTable.userID " +
                             " JOIN bookTable bookTable ON reserveBook.bookID = bookTable.bookID " +
@@ -358,31 +367,31 @@ public class GUI {
                     if (bookInfoRS.next()) {
                         bookID = bookInfoRS.getInt("reserveBook.bookID");
                         userID = bookInfoRS.getInt("reserveBook.userID");
+                        reservationID = bookInfoRS.getInt("reserveBook.reservationID");
                     }
                 }
             }
                     // sätter available på sann (bok lämnas tillbaka) på bok ID som valts
-                    String returnBook = "UPDATE bookTable SET available = ? WHERE bookID = ?";
-                    try (PreparedStatement returnedPSTMT = conn.prepareStatement(returnBook)) {
-                        returnedPSTMT.setBoolean(1, true);
-                        returnedPSTMT.setInt(2, bookID);
-                        returnedPSTMT.executeUpdate();
+            String returnBook = "UPDATE bookTable SET available = ? WHERE bookID = ?";
+            // sätter returned date på dagen personen lämnar tillbaka boken
+            String returedDate = "UPDATE reserveBook SET returnDate = ? WHERE reservationID = ?";
 
-                        System.out.println(bookID + "  returned succesfully! ");
+            try (PreparedStatement returnedPSTMT = conn.prepareStatement(returnBook)) {
+                PreparedStatement deletePstmt = conn.prepareStatement(returedDate);
 
-                        // tar bort ur reserveBook så användaren inte har den lånad  + rensar från historik menyn
-                        String deleteResRow = "DELETE FROM reserveBook WHERE userID = ? AND bookID = ?";
-                        try (PreparedStatement deletePstmt = conn.prepareStatement(deleteResRow)) {
+                returnedPSTMT.setBoolean(1, true);
+                returnedPSTMT.setInt(2, bookID);
+                returnedPSTMT.executeUpdate();
 
-                            deletePstmt.setInt(1, userID);
-                            deletePstmt.setInt(2, bookID);
-                            deletePstmt.executeUpdate();
-                        }
-                    }
-                }
+                deletePstmt.setDate(1, Date.valueOf(currentDate));
+                deletePstmt.setInt(2, reservationID);
+                deletePstmt.executeUpdate();
+            }
+            }
             }
 
             public void createHistoryPanel(){
+
                 JButton returnBTN = new JButton("Lämna tillbaka");
                 reservedbookDTable.addColumn("Återlämningsdatum");
                 reservedbookDTable.addColumn("Boknamn");
@@ -400,25 +409,25 @@ public class GUI {
                 {
                     try {
                         returnBook();
-                        System.out.println(reservedBookSelected);
+                        cl.show(mainPanel, "homepagePanel");
+                        reservedbookDTable.setRowCount(0);
 
                     } catch (SQLException ex) {
                         throw new RuntimeException(ex);
+                    } catch (ArrayIndexOutOfBoundsException ex) {
+                        System.out.println("Error");
                     }
                     System.out.println("Returned" + reservedBookSelected);
                 });
-
-
-
             }
             public void createHomepagePanel(){
-                homepagePanel.setLayout(new GridLayout(4, 4));
+                homepagePanel.setLayout(new FlowLayout());
+                JPanel innerhomepagePanel = new JPanel();
                 JLabel searchLabel = new JLabel("Sök Böcker efter namn, författare osv");
                 searchField = new JTextField();
                 JButton searchButton = new JButton("Sök böcker");
                 JButton editInfoBTN = new JButton("Edit info");
                 JButton historyBTN = new JButton("Se lånade böcker");
-                homepagePanel.add(historyBTN);
 
                 historyBTN.addActionListener(e -> {
                     cl.show(mainPanel, "historyPanel");
@@ -437,7 +446,6 @@ public class GUI {
                     System.out.println(test + bookName);
                 });
 
-                homepagePanel.add(addBTN);
                 addBTN.addActionListener(e ->
                 {
                     try {
@@ -455,18 +463,38 @@ public class GUI {
                 searchButton.addActionListener(e ->
                         checkBooks()
                 );
-                homepagePanel.add(searchLabel);
-                homepagePanel.add(searchField);
-                homepagePanel.add(searchButton);
-                homepagePanel.add(editInfoBTN);
+
+                JPanel upperPanel = new JPanel();
+                homepagePanel.add(upperPanel,BorderLayout.NORTH);
+
+                JPanel centerPanel = new JPanel();
+                homepagePanel.add(centerPanel,BorderLayout.CENTER);
+
+
+                homepagePanel.add(innerhomepagePanel,BorderLayout.SOUTH);
+
                 bookDTable.addColumn("Namn");
                 bookDTable.addColumn("Författare");
                 bookDTable.addColumn("Ledig");
-                homepagePanel.add(scrollPane);
+
+
+
+
+                homepagePanel.add(searchLabel);
+                centerPanel.add(searchButton);
+                centerPanel.add(editInfoBTN);
+                centerPanel.add(addBTN);
+                centerPanel.add(historyBTN);
+                centerPanel.setLayout(new FlowLayout());
+                centerPanel.add(searchField,BorderLayout.SOUTH);
+                searchField.setSize(500,100);
+                innerhomepagePanel.add(scrollPane);
 
             }
             public void createEditprofilePanel(){
-                editInfoPanel.setLayout(new GridLayout(2, 2));
+                editInfoPanel.setLayout(new GridLayout(10,1));
+                JPanel northeditPanel = new JPanel();
+                northeditPanel.setLayout(new GridLayout(6,1));
                 //editInfoPanel.add(editscrollPane);
                 userinfoPanel.setSize(100, 100);
                 userinfoPanel.setLayout(new GridLayout(2, 2));
@@ -504,8 +532,12 @@ public class GUI {
 
             }
             public void createRegisterPanel(){
-                registerPanel.setLayout(new GridLayout(6, 2));
-                JLabel nameLabel = new JLabel("Name:");
+
+
+                JPanel innerRegisterPanel = new JPanel();
+                innerRegisterPanel.setLayout(new GridLayout());
+                registerPanel.setLayout(new GridLayout(6,1));
+                JLabel registernameLabel = new JLabel("Name:");
                 nametextField = new JTextField();
                 JLabel emailLabel = new JLabel("Email:");
                 emailTextfield = new JTextField();
@@ -513,12 +545,11 @@ public class GUI {
                 phoneTextfield = new JTextField();
                 JLabel usernameLable = new JLabel("Username:");
                 newusernameTextfield = new JTextField();
-                JLabel passwordLabel = new JLabel("Password:");
-                JPanel innerRegisterPanel = new JPanel();
+                JLabel registerpasswordLabel = new JLabel("Password:");
 
                 newpasswordTextfield = new JTextField();
 
-                registerPanel.add(nameLabel);
+                registerPanel.add(registernameLabel);
                 registerPanel.add(nametextField);
                 registerPanel.add(emailLabel);
                 registerPanel.add(emailTextfield);
@@ -526,11 +557,20 @@ public class GUI {
                 registerPanel.add(phoneTextfield);
                 registerPanel.add(usernameLable);
                 registerPanel.add(newusernameTextfield);
-                registerPanel.add(passwordLabel);
+                registerPanel.add(registerpasswordLabel);
                 registerPanel.add(newpasswordTextfield);
+
+                JButton rtnRegister = new JButton("Return");
+                rtnRegister.addActionListener(e -> {
+                    try {
+                        cl.show(mainPanel, "loginPanel");   //tar fram main mage vid lyckad inlogg
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                });
                 JButton addRegister = new JButton("Register");
                 innerRegisterPanel.add(addRegister);
-
+                innerRegisterPanel.add(rtnRegister);
                 addRegister.addActionListener(e -> {
                     try {
                         registerMethod();
@@ -539,6 +579,11 @@ public class GUI {
                         throw new RuntimeException(ex);
                     }
                 });
+                registerPanel.add(innerRegisterPanel);
+
                 mainPanel.add(registerPanel, "registerPanel");
             }
+
+
+
         }
