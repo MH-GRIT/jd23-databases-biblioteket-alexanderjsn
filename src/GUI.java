@@ -45,7 +45,6 @@ public class GUI {
 
 
     // edit info page
-    private final DefaultTableModel editDTable = new DefaultTableModel();
 
     private final JPanel userinfoPanel = new JPanel();
 
@@ -173,6 +172,8 @@ public class GUI {
                     bookDTable.addRow(new Object[]{bookName, bookAuthor, bookStock});
                     // skriver ut i table
                 }
+                    bookTable.revalidate();
+                    bookTable.repaint();
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -191,7 +192,7 @@ public class GUI {
                 try (ResultSet userInfoRS = userInfoPstmt.executeQuery()) {
 
 
-                    editDTable.setRowCount(0);
+
 
                     // sätter nurvarande användaruppgifter på textfields labels
 
@@ -336,9 +337,10 @@ public class GUI {
                         Date borrowedDate = usersIDRS.getDate("borrowedDate");
                         String bookName = usersIDRS.getString("bookName");
                         reservedbookDTable.addRow(new Object[]{returnDate, bookName, borrowedDate});
-                        reservedbookTable.revalidate();
-                        reservedbookTable.repaint();
+
                     }
+                    reservedbookTable.revalidate();
+                    reservedbookTable.repaint();
 
                 }
             }
@@ -399,10 +401,11 @@ public class GUI {
 
                 reservedbookTable.getSelectionModel().addListSelectionListener(e -> {
                     int reservedbookInt = reservedbookTable.getSelectedRow();
+                   if (reservedbookInt >= 0){
                     //hämtar text värdet inuti row
                     reservedBookSelected = (String) reservedbookTable.getValueAt(reservedbookInt, 1);
                     System.out.println(reservedbookInt + reservedBookSelected);
-                });
+               }});
 
                 historyPanel.add(returnBTN);
                 returnBTN.addActionListener(e ->
@@ -486,8 +489,8 @@ public class GUI {
                 centerPanel.add(addBTN);
                 centerPanel.add(historyBTN);
                 centerPanel.setLayout(new FlowLayout());
-                centerPanel.add(searchField,BorderLayout.SOUTH);
-                searchField.setSize(500,100);
+                upperPanel.add(searchField);
+                searchField.setColumns(20);
                 innerhomepagePanel.add(scrollPane);
 
             }
