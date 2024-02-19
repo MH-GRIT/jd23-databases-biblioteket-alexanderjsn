@@ -103,6 +103,7 @@ public class GUI {
         frame.setVisible(true);
     }
 
+
     public void loginMethod() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
             String checkLogin = "SELECT password FROM userTable WHERE username = ?";    // tar lösenordet från userTable och jämnfför
@@ -124,6 +125,7 @@ public class GUI {
 
     public void registerMethod() throws SQLException {
         try (Connection conn = Database.getInstance().getConnection()) {
+            // sätter input värden på textfields som inserts
             String newUser = "INSERT INTO userTable (name, email, phone, password, username) VALUES (?,?,?,?,?)";
             PreparedStatement pstmt = conn.prepareStatement(newUser);
             pstmt.setString(1, nametextField.getText());
@@ -131,7 +133,6 @@ public class GUI {
             pstmt.setString(3, phoneTextfield.getText());
             pstmt.setString(4, newpasswordTextfield.getText());
             pstmt.setString(5, newusernameTextfield.getText());
-                                                // sätter input värden på textfields som inserts
             pstmt.executeUpdate();
             pstmt.close();
             cl.show(mainPanel, "loginPanel");   //tar fram main mage vid lyckad inlogg
@@ -177,7 +178,6 @@ public class GUI {
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
-            // mer här
         }
     }
 
@@ -211,7 +211,7 @@ public class GUI {
                     }
                     JButton inserBtn = new JButton("Update info");
                     editInfoPanel.add(inserBtn);
-
+                    // uppdaterar info med metod
                     inserBtn.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
@@ -257,8 +257,6 @@ public class GUI {
 
             // hämtar dagen datum + en månads datum
 
-
-
             String userInfo = "SELECT userID FROM userTable WHERE username = ?";
 
             PreparedStatement uinfoPSTMT = conn.prepareStatement(userInfo);
@@ -283,6 +281,8 @@ public class GUI {
                 PreparedStatement rPSTMT = conn.prepareStatement(reservationInfo);
                 rPSTMT.setInt(1, bookID);
                 ResultSet reserveinfoRS = rPSTMT.executeQuery();
+
+                // om redan bokad kan man inte boka, annars går det vidare:
                 boolean booked = true;
                 if (reserveinfoRS.next()) {
                     booked = reserveinfoRS.getBoolean("available");
